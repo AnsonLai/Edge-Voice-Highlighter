@@ -1,5 +1,7 @@
 # Edge Voice Highlight Injector (PROOF OF CONCEPT)
 
+![img](https://github.com/AnsonLai/Edge-Voice-Highlighter/raw/master/Screenshot%202022-05-27%20212801.jpg)
+
 Microsoft Edge browser has the BEST read aloud feature.  It will read out any webpage with natural sounding voices.  This highlighter allows you to use voice commands ("note!") to highlight what is being currently read.  If you go out for a jog and listen to a webpage, you can come back and see all the important sections you've highlighted.
 
 ## Demo
