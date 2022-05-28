@@ -1,0 +1,150 @@
+<!-- $("html").prepend($.parseHTML(` -->
+
+<edge style="position:sticky; top:0;">
+  <label for="noise_threshold">Noise Threshold (between 0 and 100):</label>
+  <input type="range" id="noise_threshold" name="noise_threshold" value="20" min="0" max="100">
+  <label for="lookback_distance">Lookback_distance (between 0 and 10):</label>
+  <input type="range" id="lookback_distance" value="3" name="lookback_distance" min="0" max="10">
+  <a id="download_highlights_button" type="button"
+    onclick="this.href='data:text/html;charset=UTF-8,'+encodeURIComponent(document.documentElement.outerHTML)" href="#"
+    download="page.html">Download Page</a>
+  <a id="show_highlights_button" type="button" href="#top">Show Highlights</a>
+  <div id="edge_quotes"></div>
+</edge>
+<script>
+  function show_highlighted_text() {
+    $('#edge_quotes').html("");
+    for (var i = 0; i < saved_text_list.length; i++) {
+      var p = $('<p />');
+      for (var j = 0; j < saved_text_list[i].length; j++) {
+        if (j == saved_text_list[i].length - 1) {
+          var span = $('<span />').text(saved_text_list[i][j]).addClass('anson-highlight').attr('style', "background: rgb(173, 255, 161);");
+          p.append(span);
+        } else {
+          var span = $('<span />').text(saved_text_list[i][j] + " ");
+          p.append(span);
+        }
+      }
+      $('#edge_quotes').append(p);
+    }
+  };
+  function clear_highlighted_text() {
+    $('#edge_quotes').html("");
+  };
+  function download_highlighted_text() {
+  };
+  document.getElementById("show_highlights_button").addEventListener("click", function () {
+    show_highlighted_text();
+  });
+  document.getElementById("clear_highlights_button").addEventListener("click", function () {
+    clear_highlighted_text();
+  });
+  // document.getElementById("download_highlights_button").addEventListener("click", function () {
+  //   download_highlighted_text();
+  // });
+  document.getElementById("noise_threshold").addEventListener("input", function () {
+    NOISE_THRESHOLD = this.value;
+    console.log(NOISE_THRESHOLD);
+  });
+  document.getElementById("lookback_distance").addEventListener("input", function () {
+    LOOKBACK_DISTANCE = this.value;
+    console.log(LOOKBACK_DISTANCE);
+  });
+</script>
+<script>
+  var NOISE_THRESHOLD = 25;
+  var LOOKBACK_DISTANCE = 3;
+
+  var running_text_list = [];
+  var saved_text_list = [];
+
+  // Select the node that will be observed for mutations
+  const targetNode = document;
+
+  // Options for the observer (which mutations to observe)
+  const config = { attributes: true, childList: true, subtree: true };
+
+  // Callback function to execute when mutations are observed
+  const callback = function (mutationsList, observer) {
+    // Use traditional 'for loops' for IE 11
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'childList') {
+        if (mutation.addedNodes.length > 0) {
+          if (mutation.addedNodes[0].tagName == 'MSREADOUTSPAN') {
+            var el = mutation.addedNodes[0];
+            if (el.classList.contains('msreadout-line-highlight')) {
+              if (!running_text_list.includes(el.textContent)) {
+                running_text_list.push(el.textContent);
+                if (running_text_list.length > LOOKBACK_DISTANCE) {
+                  running_text_list.shift();
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Create an observer instance linked to the callback function
+  const observer = new MutationObserver(callback);
+  // Start observing the target node for configured mutations
+  observer.observe(targetNode, config);
+
+
+
+  // Running microphone check
+  // https://stackoverflow.com/questions/33322681/checking-microphone-volume-in-javascript
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(function (stream) {
+      audioContext = new AudioContext();
+      analyser = audioContext.createAnalyser();
+      microphone = audioContext.createMediaStreamSource(stream);
+      javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.fftSize = 1024;
+
+      microphone.connect(analyser);
+      analyser.connect(javascriptNode);
+      javascriptNode.connect(audioContext.destination);
+      javascriptNode.onaudioprocess = function () {
+        var array = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(array);
+        var values = 0;
+
+        var length = array.length;
+        for (var i = 0; i < length; i++) {
+          values += (array[i]);
+        }
+
+        var average = values / length;
+        // colorPids(average);
+        if (Math.round(average) > NOISE_THRESHOLD) {
+          console.log(NOISE_THRESHOLD);
+          var el = document.querySelector('.msreadout-line-highlight');
+          if (!el.parentElement.classList.contains('anson-highlight')) {
+            var wrapper = document.createElement('anson');
+            wrapper.style.background = "#adffa1";
+            wrapper.classList.add('anson-highlight');
+            el.parentNode.insertBefore(wrapper, el);
+            el.parentNode.removeChild(el);
+            wrapper.appendChild(el);
+            if (!saved_text_list.includes([...running_text_list])) {
+              saved_text_list.push([...running_text_list]);
+              // Remove duplicates that often happen here
+              saved_text_list = [...saved_text_list.filter((t = {}, a => !(t[a] = a in t)))];
+            }
+          }
+        }
+
+      }
+    })
+    .catch(function (err) {
+    });
+</script>
+
+
+
+
+<!-- `)); -->
