@@ -41,6 +41,10 @@ Microsoft Edge browser has the BEST read aloud feature.  It will read out any we
 
 This is a buggy proof of concept, and I'm happy to accept contributions!  If there's enough interest, I will try and polish this.  At the moment, it works for my personal use.
 
+### Limitations
+
+Any developer will be asking why I'm using such a convoluted process.  In short, Microsoft Edge on Android doesn't have extensions or a developer console.  This API and webpage is the only way I can inject the code onto a random webpage on my phone.  It destroys the styling and some images, but the text comes through just fine.
+
 ### Building Blocks
 
 I started from two of my own templates that might be useful for others:
